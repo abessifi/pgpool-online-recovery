@@ -31,10 +31,6 @@ CheckIfPgpoolIsRunning () {
     if ! killall -0 pgpool; then echo "[ERROR] Pgpool is not running !"; exit 1; fi;
 }
 
-CheckPostgres () {
-
-}
-
 AttachNodeToPgpool () {
    #pcp_attach_node is a command that permit to attach a specific postgres server (identified by 6th parameter) to pgpool.
    #pcp_attach_node dont return a good error code when it fails so here if I catch "BackendError" message in stderr I presume
