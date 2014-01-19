@@ -21,7 +21,7 @@ Whoami () {
     fi
 }
 
-#Chek if postgres server is running on remote host
+#Check if postgres server is running on remote host
 CheckIfPostgresIsRunningOnRemoteHost () {
 	isrunning="$(ssh postgres@"$1" 'if killall -0 postgres; then echo "postgres_running"; else echo "postgress_not_running"; fi;')"
 
