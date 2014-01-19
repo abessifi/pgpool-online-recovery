@@ -52,7 +52,8 @@ The installation steps are simple. You just need to copy provided bash scripts a
 PS : All similar old files must be backed up to be able to rollback in case of risk (e.g: cp -p /etc/pgpool2/pgpool.conf /etc/pgpool2/pgpool.conf.backup).
 Make sure that :
 - All scripts are executable and owned by the proper users. 
-- /var/lib/postgresql/9.1/archive directory is created (used to archive WAL files). This directory must be owned by postgres user !
+- /var/lib/postgresql/9.1/archive directory is created (used to archive WAL files). This folder must be owned by postgres user !
+- Do not forge to edit pg_hba.conf in each postgres server to allow access to cluster's nodes.
 
 Not enough ! It remains only the configuration steps and we'll be done :)
 
@@ -89,6 +90,7 @@ To do, just follow these steps :
 	health_check_password = 'postgrespass'
 	# Failover command
 	failover_command = '/path/to/failover.sh %d %H %P /tmp/trigger_file'
+
 3- In failover.sh script, specify the proper ssh private key to postgres user to access new master  node via SSH.
 
 	ssh -i /var/lib/postgresql/.ssh/id_rsa postgres@$new_master "touch $trigger_file"
@@ -124,15 +126,42 @@ At his stage slave node is connected to master and both of them are connected to
 
 Tests
 =====
-Test PCP interface:
 
-	pcp_node_info
-	pcp_detach_node
-	pcp_attach_node
+Test PCP interface (as root) :
 
-After starting the postgres master node you should see the following log message in /var/log/postgresql/postgresql-9.1-main.log :
+	#retrieves the node information
+	pcp_node_info 10 localhost 9898 postgres "postgres-pass" "postgres-id"
+	#detaches a node from pgpool
+	pcp_detach_node 10 localhost 9898 postgres "postgres-pass" "postgres-id"
+	#attaches a node to pgpool
+	pcp_attach_node 10 localhost 9898 postgres "postgres-pass" "postgres-id"
 
-In the postgres master log file you should see :
+After starting pgpool, try to test this two scenarios :
 
-We assume that pgpool log file is /var/log/pgpool2/pgpool.log. After setting up it's convenient config file and restarting it out shoud see this message in log file :
-	
+**1. When a slave fall down** :
+
+Open pgpool log file 'tail -f /var/log/pgpool2/pgpool.log'.
+
+Stop slave node '/etc/init.d/postgres stop'.
+
+After exceeding health_check_period, you should see this log message :
+
+	[INFO] Slave node is down. Failover not triggred !
+
+Now, start slave failback process (as root) :
+
+	# ./online-recovery.sh
+
+**2. When a master fall down** :
+
+Idem, open pgpool log file.
+
+Stop master node '/etc/init.d/postgres stop'.
+
+After exceeding health_check_period, you should see this log message :
+
+	[INFO] Master node is down. Performing failover...
+
+Start failback process (as root) to switch master(new slave) and slave(new master) roles :
+
+	# ./online-recovery.sh
