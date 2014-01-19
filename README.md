@@ -35,13 +35,16 @@ PS : When a node (master or slave) fails, pgpool still running and DBs remain av
 
 **streaming-replication.sh** : This script can be executed manually to synchronize a slave node with a given master node (master name/ip must be passed as argument to streaming-replication.sh). Otherwise, this same script is triggred be online-recovery.sh via ssh during failback process.
 
-The installation steps are simple. You just need to copy provided bash scripts and config files as follow :
+Installation
+------------
 
-In pgpool node:
+The installation steps are simple. You just need to copy provided bash scripts and config files as follow.
+
+**In pgpool node** :
 * Copy pgpool.conf to /etc/pgpool2/. This is an optional operation and in this case you have to edit the default pgpool.conf file in order to looks like the config file we provided.
 * Copy failover.sh into /usr/local/bin/ and online-recovery.sh to your home or another directory that will be easily accessible.
 
-In the master and slave postgres nodes:
+**In the master and slave postgres nodes** :
 * Copy streaming-replication.sh script into /var/lib/postgresql/ (postgres homedir).
 * Copy postgresql.conf.master and postgresql.conf.slave files to /etc/postgresql/9.1/main/.
 * Finally copy recovery.conf into /var/lib/postgresql/9.1/main/.
@@ -51,11 +54,16 @@ Make sure that :
 - All scripts are executable and owned by the proper users. 
 - /var/lib/postgresql/9.1/archive directory is created (used to archive WAL files). This directory must be owned by postgres user !
 
-Not enough ! It remains only the configuration steps and we'll be done :) To do, just follow these steps :
+Not enough ! It remains only the configuration steps and we'll be done :)
 
-* First of all make sure you have created a postgres user in pgpool node with SSH access to all Postgres nodes. All cluster's nodes have to be able to ssh each other. You can put "config" file with "StrictHostKeyChecking=no" option under .ssh/ directory of postgres user. This is a best practice (essencially when automating a bunch of operations) that allows postgres to ssh remote machine for the first time without prompting and validating Yes/No authorization question.
+Configuration
+-------------
 
-* In Pgpool node set up pgpool.conf file for instance the parameters: ::
+To do, just follow these steps :
+
+1- First of all make sure you have created a postgres user in pgpool node with SSH access to all Postgres nodes. All cluster's nodes have to be able to ssh each other. You can put "config" file with "StrictHostKeyChecking=no" option under .ssh/ directory of postgres user. This is a best practice (essencially when automating a bunch of operations) that allows postgres to ssh remote machine for the first time without prompting and validating Yes/No authorization question.
+
+2- In Pgpool node set up pgpool.conf file for instance the parameters :
 
 	# Controls various backend behavior for instance master and slave(s).
 	backend_hostname0='master.foo.bar'
@@ -81,35 +89,34 @@ Not enough ! It remains only the configuration steps and we'll be done :) To do,
 	health_check_password = 'postgrespass'
 	# Failover command
 	failover_command = '/path/to/failover.sh %d %H %P /tmp/trigger_file'
-	
-* In failover.sh script, specify the proper ssh private key to postgres user to access new master  node via SSH. ::
+3- In failover.sh script, specify the proper ssh private key to postgres user to access new master  node via SSH.
 
 	ssh -i /var/lib/postgresql/.ssh/id_rsa postgres@$new_master "touch $trigger_file"
 
-* Idem for online-recovery.sh you have juste to change if needed the postgres's private key, the rest of params is set automatically when the script runs. Magic hein ! :)
+4- Idem for online-recovery.sh you have juste to change if needed the postgres's private key, the rest of params is set automatically when the script runs. Magic hein ! :)
 
-* Change the primary_conninfo access parameters (to master) in recovery.conf file in slave side : ::
+5- Change the primary_conninfo access parameters (to master) in recovery.conf file in slave side :
 
 	primary_conninfo = 'host=master-or-slave.foo.bar port=5432 user=postgres password=nopass'
 
-* Rename recovery.conf to recovery.done in master side.
+6- Rename recovery.conf to recovery.done in master side.
 
-* Setup postgres master node (after backup of postgresql.conf) : ::
-	
+7- Setup postgres master node (after backup of postgresql.conf) :
+
 	cp -p postgresql.conf.master postgresql.conf
 	/etc/init.d/postgresql restart
 
-* Setup postgres slave node (after backup of postgresql.conf) : ::
+8- Setup postgres slave node (after backup of postgresql.conf) :
 
 	cp -p postgresql.conf.slave postgresql.conf
 
-* Start first slave synchronisation with master by executing streaming-replication.sh as postgres user : ::
+9- Start first slave synchronisation with master by executing streaming-replication.sh as postgres user :
 
 	su postgres
 	cd ~
 	./streaming-replication.sh master.foo.bar
 
-* Restart pgpool : ::
+10- Restart pgpool :
 
 	/etc/init.d/pgpool2 restart
 
@@ -117,15 +124,15 @@ At his stage slave node is connected to master and both of them are connected to
 
 Tests
 =====
-Test PCP interface : ::
+Test PCP interface:
 
 	pcp_node_info
 	pcp_detach_node
 	pcp_attach_node
 
-After starting the postgres master node you should see the following log message in /var/log/postgresql/postgresql-9.1-main.log : ::
+After starting the postgres master node you should see the following log message in /var/log/postgresql/postgresql-9.1-main.log :
 
-In the postgres master log file you should see : ::
+In the postgres master log file you should see :
 
-We assume that pgpool log file is /var/log/pgpool2/pgpool.log. After setting up it's convenient config file and restarting it out shoud see this message in log file : ::
+We assume that pgpool log file is /var/log/pgpool2/pgpool.log. After setting up it's convenient config file and restarting it out shoud see this message in log file :
 	
