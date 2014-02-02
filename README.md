@@ -25,7 +25,7 @@ What about the given scripts and config files ?
 
 **recovery.conf** : A config file used by postgres slave for streaming replication process.
 
-**failover.sh** : This script will be executed automatically when a pgpool's backend node (postgres node) fall down. It'll switch the standby node (slave) to master (new master).
+**failover.sh** : This script will be executed automatically when a pgpool's backend node (postgres node) fails down. It'll switch the standby node (slave) to master (new master).
 
 **online-recovery.sh** : This is the bash script which you'll execute manually in order to :
 * Reboot, sync and reattach slave node to pgpool if it fails.
@@ -138,7 +138,7 @@ Test PCP interface (as root) :
 
 After starting pgpool, try to test this two scenarios :
 
-**1. When a slave fall down** :
+**1. When a slave fails down** :
 
 Open pgpool log file 'tail -f /var/log/pgpool2/pgpool.log'.
 
@@ -152,7 +152,7 @@ Now, start slave failback process (as root) :
 
 	# ./online-recovery.sh
 
-**2. When a master fall down** :
+**2. When a master fails down** :
 
 Idem, open pgpool log file.
 
