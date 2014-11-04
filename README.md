@@ -88,6 +88,8 @@ To do, just follow these steps :
 	health_check_period = 30
 	health_check_user = 'postgres'
 	health_check_password = 'postgrespass'
+	# - Special commands -
+        follow_master_command = 'echo %M > /tmp/postgres_master'
 	# Failover command
 	failover_command = '/path/to/failover.sh %d %H %P /tmp/trigger_file'
 
